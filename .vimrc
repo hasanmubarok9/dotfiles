@@ -1,4 +1,5 @@
 syntax on
+set autoread
 set number
 set relativenumber
 set ic
@@ -12,6 +13,12 @@ set nowritebackup
 set cmdheight=2
 set updatetime=300
 set shortmess+=c
+set ts=2 " tabstop"
+set et " expandtab"
+set sts=2 "softtabstop"
+set sw=2 "shiftwidth"
+set ai " autoindent"
+set si " smartindent"
 filetype plugin indent on
 call plug#begin()
 Plug 'preservim/nerdtree'
@@ -20,6 +27,10 @@ Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
+Plug 'pangloss/vim-javascript'
+Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries'  }
+" Plug 'leafgarland/typescript-vim'
+Plug 'maxmellon/vim-jsx-pretty'
 Plug 'tomasiser/vim-code-dark'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
@@ -33,6 +44,8 @@ Plug 'jiangmiao/auto-pairs'
 Plug 'prettier/vim-prettier', { 'do': 'yarn install --frozen-lockfile
 			\ --production'  }
 Plug 'christoomey/vim-tmux-navigator'
+" Elixir
+Plug 'elixir-editors/vim-elixir'
 call plug#end()
 " ---> NERDTree <---
 let mapleader = ","
@@ -50,14 +63,21 @@ autocmd VimEnter * NERDTree | wincmd p
 autocmd StdinReadPre * let s:std_in=1
 autocmd VimEnter * if argc() == 0 && !exists('s:std_in') | NERDTree | endif
 " --> coc <--
-"Use tab for trigger completion with characters ahead and navigate.
-" NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
-" other plugin before putting this into your config.
+"use tab for trigger completion with characters ahead and navigate.
+" note: There's always complete item selected by default, you may want to
+" enable
+" no select by `"suggest.noselect": true` in your configuration file.
+" note: Use command ':verbose imap <tab>' to make sure tab is not mapped by
+" other plugin before putting this into your config."
 inoremap <silent><expr> <TAB>
-      \ pumvisible() ? "\<C-n>" :
-      \ CheckBackspace() ? "\<TAB>" :
+      \ coc#pum#visible() ? coc#pum#next(1) :
+      \ CheckBackspace() ? "\<Tab>" :
       \ coc#refresh()
-inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
+" Make <CR> to accept selected completion item or notify coc.nvim to format
+" <C-g>u breaks current undo, please make your own choice.
+inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm()
+                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
 
 function! CheckBackspace() abort
    let col = col('.') - 1
@@ -103,6 +123,24 @@ nmap <leader>rn <Plug>(coc-rename)
 xmap <leader>f  <Plug>(coc-format-selected)
 nmap <leader>f  <Plug>(coc-format-selected)"
 
+" C++ format using clang-format, see clang-format --help
+map <C-K> :py3f /opt/homebrew/Cellar/clang-format/14.0.6/share/clang/clang-format.py<cr>
+imap <C-K> <c-o>:py3f /opt/homebrew/Cellar/clang-format/14.0.6/share/clang/clang-format.py<cr>
+
+function! Formatonsave()
+  let l:formatdiff = 1
+  py3f /opt/homebrew/Cellar/clang-format/14.0.6/share/clang/clang-format.py
+endfunction
+autocmd BufWritePre *.h,*.cc,*.cpp call Formatonsave()
+
+" C++ competitive programming templates
+autocmd BufNewFile *.cc,*.cpp 0r ~/.vim/templates/skeleton.cc
+" C++ compile and run
+nnoremap <C-c> :!clang++ -std=c++11 % -o %:r<CR>
+
+" :term vertical botright term
+nnoremap <C-]> :wa<CR>:vertical botright term ++kill=term<CR>
+
 " --> snippets <--
 let g:UltiSnipsExpandTrigger = "<tab>"
 let g:UltiSnipsJumpForwardTrigger = "<tab>"
@@ -115,6 +153,7 @@ silent! nmap <C-f> :Rg!
 
 " --> colorscheme <--
 colorscheme codedark
+
 " --> vim_airline_theme <--
 let g:airline_theme='solarized'
 let g:airline_solarized_bg='dark'
@@ -139,6 +178,10 @@ let g:airline_symbols.dirty='⚡'
 let g:closetag_filenames = '*.html,*.xhtml,*.xml,*.vue,*.phtml,*.js,*.jsx,*.coffee,*.erb'
 let g:prettier#autoformat = 1
 let g:prettier#autoformat_require_pragma = 0
+
+" --> vim-jsx-pretty <--
+let g:vim_jsx_pretty_colorful_config = 1 " default 0"
+
 " Max line length that prettier will wrap on: a number or 'auto' (use
 " textwidth).
 " default: 'auto'
